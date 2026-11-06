@@ -1,0 +1,63 @@
+#!/usr/bin/env python3
+import argparse
+import arch
+import ubuntu
+import arch_man
+import ubuntu_man
+import time
+import distro
+
+def clear_terminal():
+    print("\033[H\033[J")  #Очистить консоль
+
+def install_kernel(distro_module, debug):
+    available_versions = distro_module.get_available_versions(debug)
+    if not available_versions:
+        return
+
+    selected_version = distro_module.choose_kernel_version(available_versions, debug)
+
+    distro_module.install_packages(debug)
+    distro_module.download_kernel(selected_version, debug)
+    distro_module.extract_kernel(selected_version, debug)
+    distro_module.apply_patch(selected_version, debug)
+    distro_module.configure_kernel(selected_version, debug)
+    distro_module.compile_kernel(selected_version, debug)
+    distro_module.install_kernel(selected_version, debug)
+    distro_module.create_initramfs(selected_version, debug)
+    distro_module.update_bootloader(selected_version, debug)
+
+def main():
+    clear_terminal()
+
+    parser = argparse.ArgumentParser(description="Linux Kernel Builder")
+    parser.add_argument('-d', '--debug', action='store_true', help='Enable debug mode')
+    args = parser.parse_args()
+    debug = args.debug
+
+    print(distro.id())
+
+    if distro.id() == 'arch':
+        distro_module = arch
+        manage_module = arch_man
+    elif distro.id() == 'ubuntu':
+        distro_module = ubuntu
+        manage_module = ubuntu_man
+    else:
+        print("Неподдерживаемый дистрибутв. Совместимо с arch и debian")
+        return
+
+    print("1. Установить новое ядро")
+    print("2. Управление установленными ядрами")
+    choice = input("Введите пункт: ")
+
+    if choice == '1':
+        install_kernel(distro_module, debug)
+    elif choice == '2':
+        print()
+        manage_module.manage_kernels()
+    else:
+        print("Введите 1 или 2.")
+
+if __name__ == "__main__":
+    main()
